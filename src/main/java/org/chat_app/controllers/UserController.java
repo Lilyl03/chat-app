@@ -16,8 +16,8 @@ public class UserController {
 
     @POST
     @Path("/register")
-    public User register(User user) {
-        return userService.register(user);
+    public User register(@QueryParam("username") String username, @QueryParam("password") String password) {
+        return userService.register(new User(username,password));
     }
 
     @POST

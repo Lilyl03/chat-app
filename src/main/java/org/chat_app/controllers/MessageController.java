@@ -9,6 +9,7 @@ import org.chat_app.repository.UserRepository;
 import org.chat_app.service.MessageService;
 import org.chat_app.service.UserService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Path("/messages")
@@ -25,24 +26,28 @@ public class MessageController {
 
     @POST
     @Path("/send")
-    public Message sendMessage(@QueryParam("senderId") Long senderId, @QueryParam("receiverId") Long receiverId, @QueryParam("text") String text) {
+    public List<Message> sendMessage(@QueryParam("senderId") Long senderId, @QueryParam("receiverIds") List<Long> receiverIds, @QueryParam("text") String text) {
         User sender = userService.findById(senderId);
         if (sender == null) {
             throw new WebApplicationException("Sender not found", 404);
         }
 
-        User receiver = userService.findById(receiverId);
-        if (receiver == null) {
-            throw new WebApplicationException("Receiver not found", 404);
+        List<Message> sentMessages = new ArrayList<>();
+
+        for (Long receiverId : receiverIds) {
+            User receiver = userService.findById(receiverId);
+            if (receiver == null) {
+                continue; // Skip if receiver not found
+            }
+
+            Message message = new Message();
+            message.setSender(sender);
+            message.setReceiver(receiver);
+            message.setContent(text);
+            sentMessages.add(messageService.sendMessage(message));
         }
-
-        Message message = new Message();
-        message.setSender(sender);
-        message.setReceiver(receiver);
-        message.setContent(text);
-        return messageService.sendMessage(message);
+        return sentMessages;
     }
-
     @GET
     @Path("/{userId}")
     public List<Message> getMessages(@PathParam("userId") Long userId) {
